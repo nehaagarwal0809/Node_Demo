@@ -7,6 +7,7 @@ var _ = require("lodash");
 var fs = require("fs");
 var path = require("path");
 const saltRounds = 10;
+var ObjectId = require("mongoose").Types.ObjectId;
 
 exports.signup = async (req, res) => {
   // const user = new User({
@@ -183,32 +184,26 @@ function authenticateToken(req, res, next) {
 }
 
 exports.getUsers = (req, res) => {
-  // console.log("Request", req.headers.authorization);
-  // const authHeader = req.headers["authorization"];
-  // const token = authHeader && authHeader.split(" ")[1];
-  // if (token == null) return res.sendStatus(401); // if there isn't any token
-
-  jwt.verify(req.headers.authorization, "supersecret", (err, user) => {
-    console.log(err);
+  const token = req.headers.authorization;
+  // const user_data = {};
+  jwt.verify(token, "supersecret", (err, user) => {
     if (err) {
-      console.log(err);
       return res.sendStatus(403);
     }
-    // req.user = user;
-    console.log(user);
-    // next(); // pass the execution off to whatever request the client intended
+    User.find(
+      { _id: { $nin: [ObjectId(user.id)] } },
+      async function (err, result) {
+        console.log(result);
+        if (err) {
+          response.send(req, res, 400, err);
+        } else {
+          var resData = {
+            success: true,
+            data: result,
+          };
+          response.send(req, res, 200, "success", resData);
+        }
+      }
+    );
   });
-  //    authenticateToken();
-  //   res.send("hello")
-  //    User.findOne({ _id: ObjectId(royalty_id) }, async function (err, result) {
-  //     if (err) {
-  //       response.send(req, res, 400, err);
-  //     } else {
-  //       var resData = {
-  //         success: true,
-  //         data: result,
-  //       };
-  //       response.send(req, res, 200, "success", resData);
-  //     }
-  //   });
 };
